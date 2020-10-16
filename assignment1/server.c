@@ -43,12 +43,16 @@ int main(int argc, char const *argv[])
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+
+    // Fork to create a new child
     pid = fork();
     if(pid == -1)
     {
 	printf("Failed to fork");
         return pid;
     }
+
+    // If child process perform listen on the created socket
     else if(pid == 0)
     {
 	printf("User ID before privilege drop %d\n",getuid());
@@ -59,22 +63,24 @@ int main(int argc, char const *argv[])
         }
 	printf("User ID after privilege drop %d\n",getuid());
         printf("Child process running\n");
-    if (listen(server_fd, 3) < 0)
-    {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+        if (listen(server_fd, 3) < 0)
+        {
+            perror("listen");
+            exit(EXIT_FAILURE);
+        }
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
                        (socklen_t*)&addrlen))<0)
-    {
-        perror("accept");
-        exit(EXIT_FAILURE);
+        {
+             perror("accept");
+             exit(EXIT_FAILURE);
+        }
+        valread = read( new_socket , buffer, 1024);
+        printf("%s\n",buffer );
+        send(new_socket , hello , strlen(hello) , 0 );
+        printf("Hello message sent\n");
     }
-    valread = read( new_socket , buffer, 1024);
-    printf("%s\n",buffer );
-    send(new_socket , hello , strlen(hello) , 0 );
-    printf("Hello message sent\n");
-    }
+
+    //Inside parent process wait for child server to finish and return
     else
     {
         printf("Parent process waiting\n");
