@@ -57,8 +57,9 @@ int main(int argc, char const *argv[])
     else if(pid == 0) {
 	    printf("User ID before privilege drop %d\n",getuid());
         // if the setuid call fails, exit out of program with error.
-        if(setuid(65534)) {
-            printf("Failed to change user ID");
+        int returnVal = setuid(65534);
+        if(returnVal) {
+            printf("Failed to change user ID: %d \n", returnVal);
             return -1;
         }
         printf("User ID after privilege drop %d\n",getuid());
