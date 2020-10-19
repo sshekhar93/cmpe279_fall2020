@@ -8,6 +8,7 @@
 #define PORT 8080
 int main(int argc, char const *argv[])
 {
+    // 
     int server_fd, new_socket, valread;
     struct sockaddr_in address;
     int opt = 1;
@@ -52,39 +53,38 @@ int main(int argc, char const *argv[])
         return pid;
     }
 
-    // If child process perform listen on the created socket
-    else if(pid == 0)
-    {
-	printf("User ID before privilege drop %d\n",getuid());
-	if(setuid(65534))
-        {
-	    printf("Failed to change user ID");
-	    return -1;
+    // If child process, then perform listen on the created socket
+    else if(pid == 0) {
+	    printf("User ID before privilege drop %d\n",getuid());
+        // if the setuid call fails, exit out of program with error.
+        if(setuid(65534)) {
+            printf("Failed to change user ID");
+            return -1;
         }
-	printf("User ID after privilege drop %d\n",getuid());
+        printf("User ID after privilege drop %d\n",getuid());
         printf("Child process running\n");
-        if (listen(server_fd, 3) < 0)
-        {
+        //the child listens for connections
+        if (listen(server_fd, 3) < 0) {
             perror("listen");
             exit(EXIT_FAILURE);
         }
+        // accept will return a new socket for the connection
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                       (socklen_t*)&addrlen))<0)
-        {
-             perror("accept");
-             exit(EXIT_FAILURE);
+                    (socklen_t*)&addrlen))<0) {
+            perror("accept");
+            exit(EXIT_FAILURE);
         }
+        
         valread = read( new_socket , buffer, 1024);
         printf("%s\n",buffer );
         send(new_socket , hello , strlen(hello) , 0 );
         printf("Hello message sent\n");
     }
-
     //Inside parent process wait for child server to finish and return
-    else
-    {
+    else {
         printf("Parent process waiting\n");
-	wait();
+        //this wait will pick up the child so there is no zombies.
+	    wait();
         printf("Child process returned\n");
     }
     return 0;
