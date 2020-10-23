@@ -6,9 +6,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #define PORT 8080
-int main(int argc, char const *argv[])
-{
-    // 
+int main(int argc, char const *argv[]) {
     int server_fd, new_socket, valread;
     struct sockaddr_in address;
     int opt = 1;
@@ -28,7 +26,7 @@ int main(int argc, char const *argv[])
 
     // Forcefully attaching socket to the port 8080
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                                                  &opt, sizeof(opt)))
+                                                &opt, sizeof(opt)))
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -39,23 +37,37 @@ int main(int argc, char const *argv[])
 
     // Forcefully attaching socket to the port 8080
     if (bind(server_fd, (struct sockaddr *)&address,
-                                 sizeof(address))<0)
+                                sizeof(address))<0)
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+    // do fork in parent only
+    if(argc == 1){
+        // Fork to create a new child
+        pid = fork();
+        if(pid == -1){
+            printf("Failed to fork");
+            return pid;
+        }
 
-    // Fork to create a new child
-    pid = fork();
-    if(pid == -1)
-    {
-	printf("Failed to fork");
-        return pid;
-    }
+        // If child process, then perform listen on the created socket
+        else if(pid == 0) {
+            //call exec here to get new address space for the child
+            //** TO-DO **//
+        }
 
-    // If child process, then perform listen on the created socket
-    else if(pid == 0) {
-	    printf("User ID before privilege drop %d\n",getuid());
+        //If parent process, wait for child server to finish and return
+        else {
+            printf("Parent process waiting\n");
+            //this wait will pick up the child so there is no zombies.
+            wait();
+            printf("Child process returned\n");
+        }
+    // this should be in the child re-exec
+    } else {
+
+        printf("User ID before privilege drop %d\n",getuid());
         // if the setuid call fails, exit out of program with error.
         int returnVal = setuid(65534);
         if(returnVal) {
@@ -81,12 +93,6 @@ int main(int argc, char const *argv[])
         send(new_socket , hello , strlen(hello) , 0 );
         printf("Hello message sent\n");
     }
-    //Inside parent process wait for child server to finish and return
-    else {
-        printf("Parent process waiting\n");
-        //this wait will pick up the child so there is no zombies.
-	    wait();
-        printf("Child process returned\n");
-    }
+    
     return 0;
 }
