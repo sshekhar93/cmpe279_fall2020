@@ -43,10 +43,12 @@ int main(int argc, char const *argv[]) {
         exit(EXIT_FAILURE);
     }
     // do fork in parent only
-    printf("the Number of args: %d \n", argc);
-    for(int i = 0; i < argc; i++){
-        printf("the arg #%d: %s \n",i,argv[i]);
-    }
+    /*
+        printf("the Number of args: %d \n", argc);
+        for(int i = 0; i < argc; i++){
+            printf("the arg #%d: %s \n",i,argv[i]);
+        }
+    */
     if(argc == 1){
         // Fork to create a new child
         pid = fork();
@@ -57,9 +59,7 @@ int main(int argc, char const *argv[]) {
 
         // If child process, then perform listen on the created socket
         else if(pid == 0) {
-            //call exec here to get new address space for the child
-            //** TO-DO **//
-            printf("child bieng born\n");
+            //call exec here to get new address space for the child            
             char *args[] = {"./server", "child", NULL};
             execv(args[0], args);
         }
