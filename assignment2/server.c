@@ -61,6 +61,14 @@ int main(int argc, char const *argv[]) {
 
         // If child process, then perform listen on the created socket
         else if(pid == 0) {
+        printf("User ID before privilege drop %d\n",getuid());
+        // if the setuid call fails, exit out of program with error.
+        int returnVal = setuid(65534);
+        if(returnVal) {
+            printf("Failed to change user ID: %d \n", returnVal);
+            return -1;
+        }
+        printf("User ID after privilege drop %d\n",getuid());
             //call exec here to get new address space for the childi
             snprintf(sockfdString,10,"%d",server_fd);            
             char *args[] = {"./server", sockfdString, NULL};
@@ -76,6 +84,7 @@ int main(int argc, char const *argv[]) {
     // this should be in the child re-exec
     } else {
         printf("ERXEC child started\n");
+        printf("User ID after privilege drop %d\n",getuid());
         //initialize variables
         int new_socket, valread;
         char buffer[1000] = {0};
@@ -99,14 +108,6 @@ int main(int argc, char const *argv[]) {
 	//printf("EXEC CHILD: address.sin_port = %d\n", address.sin_port);
 
 
-        printf("User ID before privilege drop %d\n",getuid());
-        // if the setuid call fails, exit out of program with error.
-        int returnVal = setuid(65534);
-        if(returnVal) {
-            printf("Failed to change user ID: %d \n", returnVal);
-            return -1;
-        }
-        printf("User ID after privilege drop %d\n",getuid());
         printf("Child process running\n");
         //the child listens for connections
         if (listen(server_fd, 3) < 0) {
