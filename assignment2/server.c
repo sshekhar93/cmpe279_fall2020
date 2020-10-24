@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <fcntl.h> 
 #define PORT 8080
-//#define FIFO_PERMS (S_IRWXU  S_IWGRP S_IWOTH);
 int main(int argc, char const *argv[]) {
     //pipe
     //int fd1[2];
@@ -33,8 +32,6 @@ int main(int argc, char const *argv[]) {
         struct sockaddr_in address;
         int opt = 1;
         int addrlen = sizeof(address);
-        // char buffer[1000] = {0};
-        // char *hello = "Hello from server";
         int pid = 0;
 
         printf("execve=0x%p\n", execve);
@@ -42,7 +39,6 @@ int main(int argc, char const *argv[]) {
         // Creating socket file descriptor
         if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
         {
-        printf("Socket creation failed");
             perror("socket failed");
             exit(EXIT_FAILURE);
         }
@@ -51,7 +47,6 @@ int main(int argc, char const *argv[]) {
         if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
                                                     &opt, sizeof(opt)))
         {
-        printf("Socket creation failed");
             perror("setsockopt");
             exit(EXIT_FAILURE);
         }
@@ -141,15 +136,11 @@ int main(int argc, char const *argv[]) {
         //     return 1;    
         // }
         unsigned int server_fd = atoi(argv[1]);
-        //read(requestfd, &server_fd, sizeof(int));
 
 	    //printf("EXEC: server_fd = %d\n", server_fd);
 
-        //read the address from pipe1
         struct sockaddr_in address;
-        /*read(requestfd, &address.sin_family, sizeof(int));
-        read(requestfd, &address.sin_addr.s_addr, sizeof(INADDR_ANY));
-        read(requestfd, &address.sin_port, sizeof(PORT));*/
+
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
         address.sin_port = htons( PORT );
