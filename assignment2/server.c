@@ -47,18 +47,6 @@ int main(int argc, char const *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-	//Create a named pipe
-        if((mkfifo(PATH, 0777) == -1) && (errno != EEXIST))
-	{
-	    perror("Server failed to create a FIFO");        
-	    return 1;
-	}
-	if ((requestfd = open(PATH, O_RDWR)) == -1) 
-	{        
-		perror("Server failed to open its FIFO");        
-		return 1;    
-	}
-
 	//printf("PARENT: address.sin_family = %d\n", address.sin_family);
 	//printf("PARENT: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
 	//printf("PARENT: address.sin_port = %d\n", address.sin_port);
@@ -94,12 +82,6 @@ int main(int argc, char const *argv[]) {
         char *hello = "Hello from server";
 	int requestfd;
 
-        //read the server_fd from pipe 2
-        if((requestfd = open(PATH, O_WRONLY)) == -1) 
-	{        
-		perror("Client failed to open log fifo for writing");        
-		return 1;    
-	}
         unsigned int server_fd = atoi(argv[1]);
 
         //printf("EXEC: server_fd = %d\n", server_fd);
