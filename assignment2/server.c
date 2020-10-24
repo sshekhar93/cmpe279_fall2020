@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]) {
     //pipe
     //int fd1[2];
     //int fd2[2];
-    char *PATH = "CMPE";
+    // char *PATH = "CMPE";
         char sockfdString[10];
     
     /*if(pipe(fd1) == -1){
@@ -63,42 +63,44 @@ int main(int argc, char const *argv[]) {
         if (bind(server_fd, (struct sockaddr *)&address,
                                     sizeof(address))<0)
         {
-        printf("Bind failed");
+            printf("Bind failed");
             perror("bind failed");
             exit(EXIT_FAILURE);
         }
-        printf("PARENT: Bind complete");
-        //PIPE CODE
+        //printf("PARENT: Bind complete");
+        /*PIPE CODE
         //close the reading ends of the pipes
-            //close(fd1[0]);
-            //close(fd2[0]);
-
-            //write the address to pipe 1
-            //write(fd[1], address, addrlen);
-           // printf("AF_INET = %d ", sizeof(AF_INET));
+        close(fd1[0]);
+        close(fd2[0]);
+        
+        write the address to pipe 1
+        write(fd[1], address, addrlen);
+         printf("AF_INET = %d ", sizeof(AF_INET));
         if((mkfifo(PATH, 0777) == -1) && (errno != EEXIST))
-	{
-	    perror("Server failed to create a FIFO");        
-	    return 1;
-	}
-	if ((requestfd = open(PATH, O_RDWR)) == -1) 
-	{        
-		perror("Server failed to open its FIFO");        
-		return 1;    
-	}
-	    printf("PARENT: address.sin_family = %d\n", address.sin_family);
-	    printf("PARENT: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
-	    printf("PARENT: address.sin_port = %d\n", address.sin_port);
-            /*write(requestfd, &address.sin_family, sizeof(AF_INET));
+        
+        {
+            perror("Server failed to create a FIFO");        
+            return 1;
+        }
+        if ((requestfd = open(PATH, O_RDWR)) == -1) 
+        {        
+            perror("Server failed to open its FIFO");        
+            return 1;    
+        }
+            // printf("PARENT: address.sin_family = %d\n", address.sin_family);
+	    // printf("PARENT: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
+	    // printf("PARENT: address.sin_port = %d\n", address.sin_port);
+        
+            write(requestfd, &address.sin_family, sizeof(AF_INET));
             write(requestfd, &address.sin_addr.s_addr, sizeof(INADDR_ANY));
-            write(requestfd, &address.sin_port, sizeof(PORT));*/
+            write(requestfd, &address.sin_port, sizeof(PORT));
             //close(fd1[1]);
             
             //write the server_fd to pipe 2
-	    printf("PARENT: server_fd = %d\n", server_fd);
+	        printf("PARENT: server_fd = %d\n", server_fd);
             //write(requestfd, &server_fd, sizeof(int));
             //close(fd2[1]);
-
+        */
         // Fork to create a new child
         pid = fork();
         if(pid == -1){
@@ -122,26 +124,26 @@ int main(int argc, char const *argv[]) {
         }
     // this should be in the child re-exec
     } else {
-            printf("ERXEC child started\n");
+        printf("ERXEC child started\n");
         //initialize variables
         int new_socket, valread;
         char buffer[1000] = {0};
         char *hello = "Hello from server";
-	int requestfd;
+	    //int requestfd;
         //close the write end of the pipes
         //close(fd1[1]);
         //close(fd2[1]);
 
         //read the server_fd from pipe 2
-        if((requestfd = open(PATH, O_WRONLY)) == -1) 
-	{        
-		perror("Client failed to open log fifo for writing");        
-		return 1;    
-	}
+        // if((requestfd = open(PATH, O_WRONLY)) == -1) 
+        // {        
+        //     perror("Client failed to open log fifo for writing");        
+        //     return 1;    
+        // }
         unsigned int server_fd = atoi(argv[1]);
         //read(requestfd, &server_fd, sizeof(int));
 
-	    printf("EXEC: server_fd = %d\n", server_fd);
+	    //printf("EXEC: server_fd = %d\n", server_fd);
 
         //read the address from pipe1
         struct sockaddr_in address;
@@ -153,10 +155,11 @@ int main(int argc, char const *argv[]) {
         address.sin_port = htons( PORT );
         int addrlen = sizeof(address);
 
-	
+        /*
 	    printf("EXEC CHILD: address.sin_family = %d\n", address.sin_family);
 	    printf("EXEC CHILD: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
 	    printf("EXEC CHILD: address.sin_port = %d\n", address.sin_port);
+        */
 
 
         printf("User ID before privilege drop %d\n",getuid());
