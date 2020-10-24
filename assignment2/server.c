@@ -5,13 +5,19 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h> 
 #define PORT 8080
+//#define FIFO_PERMS (S_IRWXU  S_IWGRP S_IWOTH);
 int main(int argc, char const *argv[]) {
     //pipe
-    int fd1[2];
-    int fd2[2];
+    //int fd1[2];
+    //int fd2[2];
+    char *PATH = "CMPE";
+        char sockfdString[10];
     
-    if(pipe(fd1) == -1){
+    /*if(pipe(fd1) == -1){
         printf("Pipe 1 Failed");
         return -1;
     }
@@ -19,10 +25,11 @@ int main(int argc, char const *argv[]) {
     if(pipe(fd2) == -1){
         printf("Pipe 2 Failed");
         return -1;
-    }
+    }*/
 
     if(argc == 1){
-        int server_fd, new_socket, valread;
+        int requestfd;
+        unsigned int server_fd, new_socket, valread;
         struct sockaddr_in address;
         int opt = 1;
         int addrlen = sizeof(address);
@@ -35,6 +42,7 @@ int main(int argc, char const *argv[]) {
         // Creating socket file descriptor
         if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
         {
+        printf("Socket creation failed");
             perror("socket failed");
             exit(EXIT_FAILURE);
         }
@@ -43,6 +51,7 @@ int main(int argc, char const *argv[]) {
         if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
                                                     &opt, sizeof(opt)))
         {
+        printf("Socket creation failed");
             perror("setsockopt");
             exit(EXIT_FAILURE);
         }
@@ -54,27 +63,41 @@ int main(int argc, char const *argv[]) {
         if (bind(server_fd, (struct sockaddr *)&address,
                                     sizeof(address))<0)
         {
+        printf("Bind failed");
             perror("bind failed");
             exit(EXIT_FAILURE);
         }
-
+        printf("PARENT: Bind complete");
         //PIPE CODE
         //close the reading ends of the pipes
-            close(fd1[0]);
-            close(fd2[0]);
+            //close(fd1[0]);
+            //close(fd2[0]);
 
             //write the address to pipe 1
             //write(fd[1], address, addrlen);
-
-            write(fd1[1], address.sin_family, sizeof(AF_INET));
-            write(fd1[1], address.sin_addr.s_addr, sizeof(INADDR_ANY));
-            write(fd1[1], address.sin_port, sizeof(PORT));
-            close(fd1[1]);
+           // printf("AF_INET = %d ", sizeof(AF_INET));
+        if((mkfifo(PATH, 0777) == -1) && (errno != EEXIST))
+	{
+	    perror("Server failed to create a FIFO");        
+	    return 1;
+	}
+	if ((requestfd = open(PATH, O_RDWR)) == -1) 
+	{        
+		perror("Server failed to open its FIFO");        
+		return 1;    
+	}
+	    printf("PARENT: address.sin_family = %d\n", address.sin_family);
+	    printf("PARENT: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
+	    printf("PARENT: address.sin_port = %d\n", address.sin_port);
+            /*write(requestfd, &address.sin_family, sizeof(AF_INET));
+            write(requestfd, &address.sin_addr.s_addr, sizeof(INADDR_ANY));
+            write(requestfd, &address.sin_port, sizeof(PORT));*/
+            //close(fd1[1]);
             
             //write the server_fd to pipe 2
-
-            write(fd2[1], server_fd, sizeof(server_fd));
-            close(fd2[1]);
+	    printf("PARENT: server_fd = %d\n", server_fd);
+            //write(requestfd, &server_fd, sizeof(int));
+            //close(fd2[1]);
 
         // Fork to create a new child
         pid = fork();
@@ -85,8 +108,9 @@ int main(int argc, char const *argv[]) {
 
         // If child process, then perform listen on the created socket
         else if(pid == 0) {
-            //call exec here to get new address space for the child            
-            char *args[] = {"./server", "child", NULL};
+            //call exec here to get new address space for the childi
+            snprintf(sockfdString,10,"%d",server_fd);            
+            char *args[] = {"./server", sockfdString, NULL};
             execv(args[0], args);
         }
 
@@ -98,26 +122,41 @@ int main(int argc, char const *argv[]) {
         }
     // this should be in the child re-exec
     } else {
+            printf("ERXEC child started\n");
         //initialize variables
         int new_socket, valread;
         char buffer[1000] = {0};
         char *hello = "Hello from server";
-
+	int requestfd;
         //close the write end of the pipes
-        close(fd1[1]);
-        close(fd2[1]);
+        //close(fd1[1]);
+        //close(fd2[1]);
 
         //read the server_fd from pipe 2
-        int server_fd;
-        read(fd2[0], server_fd, sizeof(int));
+        if((requestfd = open(PATH, O_WRONLY)) == -1) 
+	{        
+		perror("Client failed to open log fifo for writing");        
+		return 1;    
+	}
+        unsigned int server_fd = atoi(argv[1]);
+        //read(requestfd, &server_fd, sizeof(int));
 
+	    printf("EXEC: server_fd = %d\n", server_fd);
 
         //read the address from pipe1
         struct sockaddr_in address;
-        read(fd1[0], address.sin_family, sizeof(int));
-        read(fd1[0], address.sin_addr.s_addr, sizeof(INADDR_ANY));
-        read(fd1[0], address.sin_port, sizeof(PORT));
+        /*read(requestfd, &address.sin_family, sizeof(int));
+        read(requestfd, &address.sin_addr.s_addr, sizeof(INADDR_ANY));
+        read(requestfd, &address.sin_port, sizeof(PORT));*/
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = INADDR_ANY;
+        address.sin_port = htons( PORT );
         int addrlen = sizeof(address);
+
+	
+	    printf("EXEC CHILD: address.sin_family = %d\n", address.sin_family);
+	    printf("EXEC CHILD: address.sin_addr.s_addr = %d\n", address.sin_addr.s_addr);
+	    printf("EXEC CHILD: address.sin_port = %d\n", address.sin_port);
 
 
         printf("User ID before privilege drop %d\n",getuid());
